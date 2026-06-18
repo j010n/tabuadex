@@ -1,279 +1,924 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Memorização - Tabuada</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tabuadex</title>
 
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #4e73df, #1cc88a);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" />
 
-.container {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    text-align: center;
-    width: 350px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
+  <style>
+    :root {
+      --c-bg:          #EEF2FF;
+      --c-surface:     #ffffff;
+      --c-border:      #e0e7ff;
+      --c-border-soft: #c7d2fe;
 
-.question {
-    font-size: 28px;
-    margin: 20px 0;
-}
+      --c-primary:     #6366f1;
+      --c-primary-dk:  #4f46e5;
+      --c-primary-xdk: #4338ca;
+      --c-primary-lt:  #e0e7ff;
+      --c-primary-xlt: #f5f3ff;
 
-input {
-    padding: 10px;
-    font-size: 18px;
-    width: 100px;
-    text-align: center;
-}
+      --c-ok:          #16a34a;
+      --c-ok-lt:       #dcfce7;
+      --c-ok-bd:       #86efac;
+      --c-ok-text:     #15803d;
 
-button {
-    padding: 10px 15px;
-    margin: 6px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-}
+      --c-err:         #dc2626;
+      --c-err-lt:      #fee2e2;
+      --c-err-bd:      #fca5a5;
+      --c-err-text:    #b91c1c;
 
-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
+      --c-fire-bd:     #fde68a;
+      --c-fire-text:   #b45309;
 
-.check { background-color: #4e73df; color: white; }
-.next { background-color: #1cc88a; color: white; }
-.invert { background-color: #f6c23e; color: black; }
-.history-btn { 
-    background-color: #858796; color: white;
-    width: 200px;
- }
-.reload-btn { 
-    background-color: #545663; color: white;
-    display: block;
-    margin: 6px auto;
- }
+      --c-text:        #1e1b4b;
+      --c-muted:       #a5b4fc;
+      --c-dark:        #312e81;
 
-.feedback {
-    margin-top: 10px;
-    font-weight: bold;
-}
+      --font: 'Nunito', sans-serif;
 
-.score {
-    margin-top: 15px;
-}
+      --radius-sm:  12px;
+      --radius-md:  14px;
+      --radius-lg:  16px;
+      --radius-xl:  22px;
+      --radius-pill: 99px;
 
-/* Modal */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 10;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-}
+      --gap: 12px;
+    }
 
-.modal-content {
-    background-color: white;
-    margin: 10% auto;
-    padding: 20px;
-    width: 320px;
-    border-radius: 10px;
-    max-height: 400px;
-    overflow-y: auto;
-    position: relative;
-}
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-.close {
-    position: absolute;
-    right: 15px;
-    top: 10px;
-    font-size: 20px;
-    cursor: pointer;
-}
+    body {
+      font-family: var(--font);
+      background: var(--c-bg);
+      color: var(--c-text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
 
-.history-item {
-    padding: 8px;
-    margin: 5px 0;
-    border-radius: 5px;
-    font-weight: bold;
-}
+    #shell {
+      width: 100%;
+      max-width: 400px;
+      padding: 18px 14px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+    }
 
-.correct-item {
-    background-color: #d4edda;
-    color: #155724;
-}
+    @media (min-width: 440px) {
+      body { padding: 20px 12px; align-items: center; }
+      #shell {
+        border-radius: 24px;
+        background: var(--c-bg);
+        padding: 22px 18px 32px;
+      }
+    }
 
-.wrong-item {
-    background-color: #f8d7da;
-    color: #721c24;
-}
-</style>
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--c-primary-xdk);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .topbar-btns { display: flex; gap: 8px; }
+
+    .icon-btn {
+      background: var(--c-border-soft);
+      border: none;
+      border-radius: var(--radius-sm);
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #3730a3;
+      font-size: 17px;
+      transition: background .15s;
+    }
+    .icon-btn:hover { background: var(--c-muted); }
+
+    .pbar-wrap { display: flex; flex-direction: column; gap: 5px; }
+
+    .pbar-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--c-primary);
+    }
+
+    .pbar {
+      height: 7px;
+      background: var(--c-border-soft);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+    }
+
+    .pbar__fill {
+      height: 100%;
+      background: var(--c-primary);
+      border-radius: var(--radius-pill);
+      transition: width .45s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat {
+      background: var(--c-surface);
+      border: 1.5px solid var(--c-border);
+      border-radius: var(--radius-md);
+      padding: 10px 6px;
+      text-align: center;
+    }
+
+    .stat__value {
+      font-size: 22px;
+      font-weight: 900;
+    }
+    .stat__value--question { color: var(--c-primary); }
+    .stat__value--correct  { color: var(--c-ok); }
+    .stat__value--wrong    { color: var(--c-err); }
+
+    .stat__label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--c-muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-top: 1px;
+    }
+
+    .streak-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--c-surface);
+      border: 1.5px solid var(--c-fire-bd);
+      border-radius: var(--radius-pill);
+      padding: 7px 16px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--c-fire-text);
+    }
+
+    .q-card {
+      background: var(--c-surface);
+      border: 1.5px solid var(--c-border);
+      border-radius: var(--radius-xl);
+      padding: 24px 16px 20px;
+      text-align: center;
+    }
+
+    .q-card__label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--c-muted);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      margin-bottom: 10px;
+    }
+
+    .q-card__number {
+      font-size: 50px;
+      font-weight: 900;
+      color: var(--c-primary-xdk);
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+
+    .q-card__hint {
+      font-size: 11px;
+      color: var(--c-muted);
+      font-weight: 700;
+      min-height: 16px;
+      margin-top: 4px;
+    }
+
+    .display-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .answer-display {
+      width: 130px;
+      height: 56px;
+      background: var(--c-primary-xlt);
+      border: 2px solid var(--c-border-soft);
+      border-radius: var(--radius-lg);
+      font-size: 30px;
+      font-weight: 900;
+      color: var(--c-primary-xdk);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: -1px;
+      transition: border-color .2s;
+    }
+    .answer-display--filled { border-color: var(--c-primary); }
+    .answer-display--ok  { background: #f0fdf4; border-color: var(--c-ok);  color: var(--c-ok-text); }
+    .answer-display--err { background: var(--c-err-lt); border-color: var(--c-err); color: var(--c-err); }
+
+    .feedback {
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-pill);
+      font-size: 13px;
+      font-weight: 800;
+      padding: 0 16px;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .feedback--ok  { background: var(--c-ok-lt);  color: var(--c-ok-text); border: 1px solid var(--c-ok-bd);  opacity: 1; }
+    .feedback--err { background: var(--c-err-lt); color: var(--c-err-text); border: 1px solid var(--c-err-bd); opacity: 1; }
+
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .np {
+      height: 54px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--c-border);
+      background: var(--c-surface);
+      color: var(--c-dark);
+      font-size: 20px;
+      font-weight: 900;
+      font-family: var(--font);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .12s, transform .1s;
+      -webkit-tap-highlight-color: transparent;
+      width: 100%;
+    }
+    .np:hover   { background: var(--c-primary-lt); }
+    .np:active  { transform: scale(.93); background: var(--c-border-soft); }
+    .np:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+
+    .np--delete {
+      background: #fff0f0;
+      color: var(--c-err);
+      border-color: var(--c-err-bd);
+    }
+    .np--delete:hover { background: var(--c-err-lt); }
+
+    .np--zero { grid-column: span 1; }
+
+    .cta-btn {
+      height: 54px;
+      border-radius: var(--radius-lg);
+      border: none;
+      font-size: 16px;
+      font-weight: 900;
+      font-family: var(--font);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      transition: transform .12s, opacity .12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cta-btn:active  { transform: scale(.97); }
+    .cta-btn:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+
+    .cta-btn--confirm { background: var(--c-primary);    color: #fff; }
+    .cta-btn--confirm:hover { background: var(--c-primary-dk); }
+
+    .cta-btn--next { background: var(--c-ok); color: #fff; }
+    .cta-btn--next:hover { background: var(--c-ok-text); }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .btn-sec {
+      height: 46px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--c-border-soft);
+      background: var(--c-surface);
+      color: var(--c-primary-xdk);
+      font-size: 13px;
+      font-weight: 800;
+      font-family: var(--font);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background .12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-sec:hover { background: var(--c-primary-lt); }
+
+    .btn-sec--danger {
+      border-color: var(--c-err-bd);
+      color: var(--c-err);
+      background: var(--c-surface);
+    }
+    .btn-sec--danger:hover { background: var(--c-err-lt); }
+
+    .finish {
+      display: none; 
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 8px 0;
+    }
+
+    .finish__icon  { font-size: 56px; line-height: 1; text-align: center; }
+    .finish__title { font-size: 26px; font-weight: 900; color: var(--c-primary-xdk); text-align: center; }
+    .finish__sub   { font-size: 13px; color: var(--c-primary); font-weight: 700; text-align: center; line-height: 1.5; }
+
+    .finish__stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      width: 100%;
+    }
+
+    .modal {
+      display: none;
+      flex-direction: column;
+      border-radius: 20px;
+      border: 1.5px solid var(--c-border-soft);
+      background: var(--c-surface);
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .modal--open { display: flex; }
+
+    .modal__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--c-border);
+    }
+
+    .modal__title { font-size: 15px; font-weight: 900; color: var(--c-primary-xdk); }
+
+    .modal__close {
+      background: var(--c-primary-lt);
+      border: none;
+      color: var(--c-primary-xdk);
+      font-size: 15px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-family: var(--font);
+    }
+
+    .modal__list {
+      padding: 10px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+
+    .hist-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .hist-item--ok  { background: var(--c-ok-lt);  color: var(--c-ok-text); }
+    .hist-item--err { background: var(--c-err-lt); color: var(--c-err-text); }
+
+    .hist-item__answer { font-size: 12px; opacity: .75; }
+
+
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
 </head>
 
 <body>
+  <div id="shell">
+    <h2 class="sr-only">Jogo da tabuada</h2>
 
-<div class="container">
-    <h1>Memorização Tabuada</h1>
-    <div class="question" id="question"></div>
-    <input type="number" id="answer" placeholder="Resposta">
-    <br>
-    <button class="check" id="checkBtn" onclick="checkAnswer()">Verificar</button>
-    <button class="invert" onclick="invert()">Inverter</button>
-    <button class="next" id="nextBtn" onclick="nextQuestion()" disabled>Próxima</button>
-    <button class="history-btn" onclick="openModal()">Histórico</button>
-    <button class="reload-btn" onclick="reloadPage()">Recarregar</button>
-    <div class="feedback" id="feedback"></div>
-    <div class="score">
-        Acertos: <span id="correct">0</span> |
-        Erros: <span id="wrong">0</span>
+
+    <header class="topbar">
+      <div class="logo">
+        <i class="ti ti-calculator" aria-hidden="true" style="font-size:20px"></i>
+        Tabuadex
+      </div>
+      <div class="topbar-btns">
+        <button class="icon-btn" id="btnHistory" aria-label="Histórico">
+          <i class="ti ti-history" aria-hidden="true"></i>
+        </button>
+        <button class="icon-btn" id="btnRestart" aria-label="Reiniciar">
+          <i class="ti ti-refresh" aria-hidden="true"></i>
+        </button>
+      </div>
+    </header>
+
+  
+    <div id="modal" class="modal" role="dialog" aria-label="Histórico de respostas">
+      <div class="modal__header">
+        <span class="modal__title">Histórico</span>
+        <button class="modal__close" id="btnModalClose" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal__list" id="histList"></div>
     </div>
-</div>
 
-<!-- Modal -->
-<div id="historyModal" class="modal">
-    <div class="modal-content" id="modalContent">
-        <span class="close" onclick="closeModal()">×</span>
-        <h3>Histórico</h3>
-        <div id="historyList"></div>
+
+    <div class="pbar-wrap">
+      <div class="pbar-row">
+        <span id="progLabel">0 de 45</span>
+        <span id="progPct">0%</span>
+      </div>
+      <div class="pbar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+        <div class="pbar__fill" id="pbarFill" style="width:0%"></div>
+      </div>
     </div>
-</div>
 
-<script>
-let questions = [];
-let currentIndex = 0;
-let current;
-let inverted = false;
-let correctCount = 0;
-let wrongCount = 0;
-let history = [];
 
-function generateQuestions() {
-    for (let i = 2; i <= 10; i++) {
-        for (let j = i; j <= 10; j++) {
-            questions.push({a: i, b: j});
-        }
-    }
-    questions.sort(() => Math.random() - 0.5);
-}
+    <div class="stats">
+      <div class="stat">
+        <div class="stat__value stat__value--question" id="statQuestion">1</div>
+        <div class="stat__label">Questão</div>
+      </div>
+      <div class="stat">
+        <div class="stat__value stat__value--correct" id="statCorrect">0</div>
+        <div class="stat__label">Acertos</div>
+      </div>
+      <div class="stat">
+        <div class="stat__value stat__value--wrong" id="statWrong">0</div>
+        <div class="stat__label">Erros</div>
+      </div>
+    </div>
 
-function showQuestion() {
-    if (currentIndex >= questions.length) {
-        document.getElementById("question").innerText = "🎉 Você finalizou!";
-        document.getElementById("feedback").innerText = "Recarregue a página para recomeçar.";
-        document.getElementById("checkBtn").disabled = true;
-        document.getElementById("nextBtn").disabled = true;
-        return;
-    }
 
-    current = questions[currentIndex];
-    inverted = false;
+    <div class="streak-pill">
+      <i class="ti ti-flame" aria-hidden="true" style="font-size:15px"></i>
+      <span id="streakText">Sequência: 0</span>
+    </div>
 
-    document.getElementById("question").innerText = `${current.a} x ${current.b}`;
-    document.getElementById("answer").value = "";
-    document.getElementById("feedback").innerText = "";
 
-    document.getElementById("checkBtn").disabled = false;
-    document.getElementById("nextBtn").disabled = true;
-}
+    <div id="gameArea" style="display:flex;flex-direction:column;gap:12px">
 
-function checkAnswer() {
-    const userAnswer = Number(document.getElementById("answer").value);
-    const correctAnswer = current.a * current.b;
 
-    let record = {
-        question: `${current.a} x ${current.b}`,
-        correctAnswer: correctAnswer,
-        userAnswer: userAnswer,
-        correct: userAnswer === correctAnswer
+      <div class="q-card">
+        <div class="q-card__label" id="questionLabel">Questão 1 de 45</div>
+        <div class="q-card__number" id="questionNumber">? × ?</div>
+        <div class="q-card__hint" id="questionHint"></div>
+      </div>
+
+ 
+      <div class="display-wrap">
+        <div class="answer-display" id="answerDisplay">?</div>
+        <div class="feedback" id="feedback"></div>
+      </div>
+
+  
+      <div class="numpad">
+        <button class="np" data-digit="1">1</button>
+        <button class="np" data-digit="2">2</button>
+        <button class="np" data-digit="3">3</button>
+        <button class="np" data-digit="4">4</button>
+        <button class="np" data-digit="5">5</button>
+        <button class="np" data-digit="6">6</button>
+        <button class="np" data-digit="7">7</button>
+        <button class="np" data-digit="8">8</button>
+        <button class="np" data-digit="9">9</button>
+        <button class="np np--delete" id="btnDelete" aria-label="Apagar">
+          <i class="ti ti-backspace" aria-hidden="true"></i>
+        </button>
+        <button class="np np--zero" data-digit="0">0</button>
+        <button class="np cta-btn cta-btn--confirm" id="ctaBtn" aria-label="Continuar">
+          <i class="ti ti-check" aria-hidden="true" id="ctaIcon"></i>
+      </button>
+      </div>
+
+      <!-- Confirmar / Continuar -->
+      <!-- <button class="cta-btn cta-btn--confirm" id="ctaBtn">
+        <i class="ti ti-check" aria-hidden="true" id="ctaIcon"></i>
+        <span id="ctaLabel">Confirmar</span>
+      </button> -->
+
+   
+      <div class="btn-row">
+        <button class="btn-sec" id="btnInvert">
+          <i class="ti ti-arrows-exchange" aria-hidden="true"></i> Inverter
+        </button>
+        <button class="btn-sec btn-sec--danger" id="btnRestartGame">
+          <i class="ti ti-refresh" aria-hidden="true"></i> Reiniciar
+        </button>
+      </div>
+    </div>
+
+
+    <div class="finish" id="finishArea">
+      <div class="finish__icon"  id="finishIcon"></div>
+      <div class="finish__title" id="finishTitle"></div>
+      <div class="finish__sub"   id="finishSub"></div>
+      <div class="finish__stats" id="finishStats"></div>
+
+      <button class="cta-btn cta-btn--confirm" id="btnPlayAgain" style="margin-top:4px">
+        <i class="ti ti-refresh" aria-hidden="true"></i> Jogar novamente
+      </button>
+      <button class="btn-sec" id="btnFinishHistory" style="width:100%;margin-top:6px">
+        <i class="ti ti-history" aria-hidden="true"></i> Ver histórico
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+
+    const state = {
+      questions:    [],   // lista embaralhada de {a, b}
+      currentIndex: 0,    // índice da questão atual
+      currentQ:     null, // questão em exibição {a, b}
+      isInverted:   false,// se a ordem (a × b → b × a) foi invertida
+      typedValue:   '',   // dígitos digitados pelo usuário
+      isChecked:    false,// true após o usuário confirmar a resposta
+      correctCount: 0,
+      wrongCount:   0,
+      streak:       0,    // sequência atual de acertos
+      bestStreak:   0,
+      history:      [],   // [{q, correct, typed, ok}]
     };
 
-    history.push(record);
-
-    if (record.correct) {
-        document.getElementById("feedback").innerText = "✅ Correto!";
-        document.getElementById("feedback").style.color = "green";
-        correctCount++;
-        document.getElementById("correct").innerText = correctCount;
-    } else {
-        document.getElementById("feedback").innerText = `❌ Errado! Resposta: ${correctAnswer}`;
-        document.getElementById("feedback").style.color = "red";
-        wrongCount++;
-        document.getElementById("wrong").innerText = wrongCount;
+    /* ---------------------------------------------------------
+       Cobre todas as combinações de 2×2 até 10×10 sem repetição
+       por comutatividade (2×3 = 3×2), total 45 questões.
+    --------------------------------------------------------- */
+    function generateQuestions() {
+      const qs = [];
+      for (let a = 2; a <= 10; a++) {
+        for (let b = a; b <= 10; b++) {
+          qs.push({ a, b });
+        }
+      }
+      
+      for (let i = qs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [qs[i], qs[j]] = [qs[j], qs[i]];
+      }
+      return qs;
     }
 
-    document.getElementById("checkBtn").disabled = true;
-    document.getElementById("nextBtn").disabled = false;
-}
 
-function nextQuestion() {
-    currentIndex++;
+    function renderProgress() {
+      const { currentIndex, questions } = state;
+      const total = questions.length;
+      const pct   = Math.round((currentIndex / total) * 100);
+
+      document.getElementById('pbarFill').style.width = pct + '%';
+      document.getElementById('progLabel').textContent = `${currentIndex} de ${total}`;
+      document.getElementById('progPct').textContent   = pct + '%';
+
+      const pbar = document.querySelector('.pbar');
+      pbar.setAttribute('aria-valuenow', pct);
+    }
+
+    function renderStats() {
+      document.getElementById('statQuestion').textContent = state.currentIndex + 1;
+      document.getElementById('statCorrect').textContent  = state.correctCount;
+      document.getElementById('statWrong').textContent    = state.wrongCount;
+    }
+
+    function renderStreak() {
+      const { streak, bestStreak } = state;
+      const extra = streak > 1 ? ` (melhor: ${bestStreak})` : '';
+      document.getElementById('streakText').textContent = `Sequência: ${streak}${extra}`;
+    }
+
+    function renderQuestion() {
+      const { currentIndex, questions, currentQ, isInverted } = state;
+      const total = questions.length;
+
+      document.getElementById('questionLabel').textContent =
+        `Questão ${currentIndex + 1} de ${total}`;
+
+      const [x, y] = isInverted
+        ? [currentQ.b, currentQ.a]
+        : [currentQ.a, currentQ.b];
+
+      document.getElementById('questionNumber').textContent = `${x} × ${y}`;
+      document.getElementById('questionHint').textContent   = isInverted ? '(invertida)' : '';
+    }
+
+    function renderAnswerDisplay(value, displayState) {
+      const el = document.getElementById('answerDisplay');
+      el.textContent = value || '?';
+
+      el.className = 'answer-display';
+      if (displayState === 'ok')  el.classList.add('answer-display--ok');
+      if (displayState === 'err') el.classList.add('answer-display--err');
+      if (value && !displayState) el.classList.add('answer-display--filled');
+    }
+
+    function renderFeedback(type, html) {
+      const el = document.getElementById('feedback');
+      el.className = 'feedback';
+      if (type) el.classList.add(`feedback--${type}`);
+      el.innerHTML = html;
+    }
+
+
+    function renderCtaButton(mode) {
+      const btn   = document.getElementById('ctaBtn');
+      const icon  = document.getElementById('ctaIcon');
+      // const label = document.getElementById('ctaLabel');
+
+      if (mode === 'confirm') {
+        btn.className   = 'cta-btn cta-btn--confirm';
+        icon.className  = 'ti ti-check';
+        // label.textContent = 'Confirmar';
+      } else {
+        btn.className   = 'cta-btn cta-btn--next';
+        icon.className  = 'ti ti-arrow-right';
+        // label.textContent = 'Continuar';
+      }
+
+      btn.disabled = false;
+    }
+
+    function setNumpadDisabled(disabled) {
+      document.querySelectorAll('.np').forEach(btn => {
+        btn.disabled = disabled;
+      });
+    }
+
+    function showQuestion() {
+      if (state.currentIndex >= state.questions.length) {
+        showFinishScreen();
+        return;
+      }
+
+      state.currentQ   = state.questions[state.currentIndex];
+      state.isInverted = false;
+      state.typedValue = '';
+      state.isChecked  = false;
+
+      renderProgress();
+      renderStats();
+      renderStreak();
+      renderQuestion();
+      renderAnswerDisplay('', '');
+      renderFeedback('', '');
+      renderCtaButton('confirm');
+      setNumpadDisabled(false);
+    }
+
+    function appendDigit(digit) {
+      if (state.isChecked) return;
+      if (state.typedValue.length >= 3) return;
+      state.typedValue += digit;
+      renderAnswerDisplay(state.typedValue, '');
+    }
+
+    function deleteLastDigit() {
+      if (state.isChecked) return;
+      state.typedValue = state.typedValue.slice(0, -1);
+      renderAnswerDisplay(state.typedValue, '');
+    }
+
+    function checkAnswer() {
+      if (!state.typedValue) return;
+
+      state.isChecked = true;
+      const userAnswer    = Number(state.typedValue);
+      const correctAnswer = state.currentQ.a * state.currentQ.b;
+      const isOk          = userAnswer === correctAnswer;
+
+      state.history.push({
+        q:       `${state.currentQ.a} × ${state.currentQ.b}`,
+        correct: correctAnswer,
+        typed:   userAnswer,
+        ok:      isOk,
+      });
+
+      if (isOk) {
+        state.correctCount++;
+        state.streak++;
+        if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+      } else {
+        state.wrongCount++;
+        state.streak = 0;
+      }
+
+      if (isOk) {
+        renderAnswerDisplay(state.typedValue, 'ok');
+        renderFeedback('ok',
+          `<i class="ti ti-check" aria-hidden="true"></i> Correto! ` +
+          `${state.currentQ.a} × ${state.currentQ.b} = ${correctAnswer}`
+        );
+      } else {
+        renderAnswerDisplay(state.typedValue, 'err');
+        renderFeedback('err',
+          `<i class="ti ti-x" aria-hidden="true"></i> Errado! Resposta: ${correctAnswer}`
+        );
+      }
+
+      renderStats();
+      renderStreak();
+      setNumpadDisabled(true);
+      renderCtaButton('next');
+    }
+
+    function advanceQuestion() {
+      state.currentIndex++;
+      showQuestion();
+    }
+
+    function handleCtaClick() {
+      if (!state.isChecked) {
+        checkAnswer();
+      } else {
+        advanceQuestion();
+      }
+    }
+
+    function invertQuestion() {
+      if (!state.currentQ || state.isChecked) return;
+      state.isInverted = !state.isInverted;
+      renderQuestion();
+    }
+
+    function restartGame() {
+      Object.assign(state, {
+        questions:    generateQuestions(),
+        currentIndex: 0,
+        currentQ:     null,
+        isInverted:   false,
+        typedValue:   '',
+        isChecked:    false,
+        correctCount: 0,
+        wrongCount:   0,
+        streak:       0,
+        bestStreak:   0,
+        history:      [],
+      });
+
+      document.getElementById('gameArea').style.display   = 'flex';
+      document.getElementById('finishArea').style.display = 'none';
+      closeModal();
+      showQuestion();
+    }
+
+
+    function openModal() {
+      const list = document.getElementById('histList');
+
+      if (!state.history.length) {
+        list.innerHTML =
+          '<p style="color:var(--c-muted);font-size:13px;text-align:center;padding:14px 0">' +
+          'Nenhuma resposta ainda.</p>';
+      } else {
+        list.innerHTML = state.history.map(entry => {
+          const cls  = entry.ok ? 'ok' : 'err';
+          const icon = entry.ok ? 'ti-check' : 'ti-x';
+          const wrongNote = entry.ok
+            ? ''
+            : `<span class="hist-item__answer">Você: ${entry.typed}</span>`;
+
+          return (
+            `<div class="hist-item hist-item--${cls}">` +
+            `<span><i class="ti ${icon}" aria-hidden="true" style="margin-right:5px"></i>` +
+            `${entry.q} = ${entry.correct}</span>` +
+            wrongNote +
+            `</div>`
+          );
+        }).join('');
+      }
+
+      document.getElementById('modal').classList.add('modal--open');
+      document.getElementById('modal').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('modal--open');
+    }
+
+    function toggleModal() {
+      const isOpen = document.getElementById('modal').classList.contains('modal--open');
+      isOpen ? closeModal() : openModal();
+    }
+
+
+    function showFinishScreen() {
+      document.getElementById('gameArea').style.display   = 'none';
+      document.getElementById('finishArea').style.display = 'flex';
+
+      document.getElementById('pbarFill').style.width     = '100%';
+      document.getElementById('progLabel').textContent    =
+        `${state.questions.length} de ${state.questions.length}`;
+      document.getElementById('progPct').textContent      = '100%';
+
+      const total = state.questions.length;
+      const pct   = Math.round((state.correctCount / total) * 100);
+
+      const icon  = pct === 100 ? '🏆' : pct >= 80 ? '🎉' : pct >= 60 ? '👍' : '📚';
+      const title =
+        pct === 100 ? 'Perfeito!'             :
+        pct >=  80  ? 'Muito bem!'            :
+        pct >=  60  ? 'Bom trabalho!'         :
+                      'Continue praticando!';
+
+      document.getElementById('finishIcon').textContent  = icon;
+      document.getElementById('finishTitle').textContent = title;
+      document.getElementById('finishSub').textContent   =
+        `${state.correctCount} acertos · ${state.wrongCount} erros · ${pct}% de aproveitamento`;
+
+      
+      document.getElementById('finishStats').innerHTML =
+        `<div class="stat">
+          <div class="stat__value stat__value--correct">${state.correctCount}</div>
+          <div class="stat__label">Acertos</div>
+        </div>` +
+        `<div class="stat">
+          <div class="stat__value stat__value--wrong">${state.wrongCount}</div>
+          <div class="stat__label">Erros</div>
+        </div>` +
+        `<div class="stat">
+          <div class="stat__value stat__value--question">${state.bestStreak}</div>
+          <div class="stat__label">Melhor seq.</div>
+        </div>`;
+    }
+
+    document.getElementById('btnHistory').addEventListener('click', toggleModal);
+    document.getElementById('btnRestart').addEventListener('click', restartGame);
+
+    document.getElementById('btnModalClose').addEventListener('click', closeModal);
+
+    document.querySelector('.numpad').addEventListener('click', e => {
+      const btn = e.target.closest('[data-digit]');
+      if (btn) appendDigit(btn.dataset.digit);
+    });
+    document.getElementById('btnDelete').addEventListener('click', deleteLastDigit);
+
+    document.getElementById('ctaBtn').addEventListener('click', handleCtaClick);
+
+    document.getElementById('btnInvert').addEventListener('click', invertQuestion);
+    document.getElementById('btnRestartGame').addEventListener('click', restartGame);
+
+    document.getElementById('btnPlayAgain').addEventListener('click', restartGame);
+    document.getElementById('btnFinishHistory').addEventListener('click', toggleModal);
+
+    document.addEventListener('keydown', e => {
+      if (e.key >= '0' && e.key <= '9') appendDigit(e.key);
+      else if (e.key === 'Backspace')    deleteLastDigit();
+      else if (e.key === 'Enter')        handleCtaClick();
+    });
+
+    state.questions = generateQuestions();
     showQuestion();
-}
-
-function invert() {
-    inverted = !inverted;
-    if (inverted) {
-        document.getElementById("question").innerText = `${current.b} x ${current.a}`;
-    } else {
-        document.getElementById("question").innerText = `${current.a} x ${current.b}`;
-    }
-}
-
-/* Modal */
-function openModal() {
-    const modal = document.getElementById("historyModal");
-    const list = document.getElementById("historyList");
-    list.innerHTML = "";
-
-    if (history.length === 0) {
-        list.innerHTML = "<p>Nenhuma resposta ainda.</p>";
-    } else {
-        history.forEach(item => {
-            const div = document.createElement("div");
-            div.classList.add("history-item");
-            div.classList.add(item.correct ? "correct-item" : "wrong-item");
-            div.innerHTML = item.correct 
-                ? `✔ ${item.question} = ${item.correctAnswer}`
-                : `✖ ${item.question} = ${item.correctAnswer} (Você: ${item.userAnswer})`;
-            list.appendChild(div);
-        });
-    }
-
-    modal.style.display = "block";
-}
-
-function closeModal() {
-    document.getElementById("historyModal").style.display = "none";
-}
-
-function reloadPage() {
-    location.reload(true)
-}
-
-// Fecha clicando fora
-window.onclick = function(event) {
-    const modal = document.getElementById("historyModal");
-    if (event.target === modal) {
-        modal.style.display = "none";
-    }
-}
-
-generateQuestions();
-showQuestion();
-</script>
-
+  </script>
 </body>
 </html>
