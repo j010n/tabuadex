@@ -371,16 +371,29 @@
       width: 100%;
     }
 
-    .modal {
+    .modal-overlay {
       display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(30, 27, 75, 0.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay--open { display: flex; }
+
+    .modal {
+      display: flex;
       flex-direction: column;
       border-radius: 20px;
       border: 1.5px solid var(--c-border-soft);
       background: var(--c-surface);
       overflow: hidden;
-      margin-top: 4px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.18);
     }
-    .modal--open { display: flex; }
 
     .modal__header {
       display: flex;
@@ -413,10 +426,9 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 220px;
+      max-height: 300px;
       overflow-y: auto;
     }
-
 
     .hist-item {
       display: flex;
@@ -431,7 +443,6 @@
     .hist-item--err { background: var(--c-err-lt); color: var(--c-err-text); }
 
     .hist-item__answer { font-size: 12px; opacity: .75; }
-
 
     .sr-only {
       position: absolute;
@@ -449,7 +460,6 @@
   <div id="shell">
     <h2 class="sr-only">Jogo da tabuada</h2>
 
-
     <header class="topbar">
       <div class="logo">
         <i class="ti ti-calculator" aria-hidden="true" style="font-size:20px"></i>
@@ -465,15 +475,15 @@
       </div>
     </header>
 
-  
-    <div id="modal" class="modal" role="dialog" aria-label="Histórico de respostas">
-      <div class="modal__header">
-        <span class="modal__title">Histórico</span>
-        <button class="modal__close" id="btnModalClose" aria-label="Fechar">×</button>
+    <div id="modalOverlay" class="modal-overlay" role="dialog" aria-label="Histórico de respostas">
+      <div class="modal">
+        <div class="modal__header">
+          <span class="modal__title">Histórico</span>
+          <button class="modal__close" id="btnModalClose" aria-label="Fechar">×</button>
+        </div>
+        <div class="modal__list" id="histList"></div>
       </div>
-      <div class="modal__list" id="histList"></div>
     </div>
-
 
     <div class="pbar-wrap">
       <div class="pbar-row">
@@ -484,7 +494,6 @@
         <div class="pbar__fill" id="pbarFill" style="width:0%"></div>
       </div>
     </div>
-
 
     <div class="stats">
       <div class="stat">
@@ -501,15 +510,12 @@
       </div>
     </div>
 
-
     <div class="streak-pill">
       <i class="ti ti-flame" aria-hidden="true" style="font-size:15px"></i>
       <span id="streakText">Sequência: 0</span>
     </div>
 
-
     <div id="gameArea" style="display:flex;flex-direction:column;gap:12px">
-
 
       <div class="q-card">
         <div class="q-card__label" id="questionLabel">Questão 1 de 45</div>
@@ -517,13 +523,11 @@
         <div class="q-card__hint" id="questionHint"></div>
       </div>
 
- 
       <div class="display-wrap">
         <div class="answer-display" id="answerDisplay">?</div>
         <div class="feedback" id="feedback"></div>
       </div>
 
-  
       <div class="numpad">
         <button class="np" data-digit="1">1</button>
         <button class="np" data-digit="2">2</button>
@@ -540,16 +544,9 @@
         <button class="np np--zero" data-digit="0">0</button>
         <button class="np cta-btn cta-btn--confirm" id="ctaBtn" aria-label="Continuar">
           <i class="ti ti-check" aria-hidden="true" id="ctaIcon"></i>
-      </button>
+        </button>
       </div>
 
-      <!-- Confirmar / Continuar -->
-      <!-- <button class="cta-btn cta-btn--confirm" id="ctaBtn">
-        <i class="ti ti-check" aria-hidden="true" id="ctaIcon"></i>
-        <span id="ctaLabel">Confirmar</span>
-      </button> -->
-
-   
       <div class="btn-row">
         <button class="btn-sec" id="btnInvert">
           <i class="ti ti-arrows-exchange" aria-hidden="true"></i> Inverter
@@ -559,7 +556,6 @@
         </button>
       </div>
     </div>
-
 
     <div class="finish" id="finishArea">
       <div class="finish__icon"  id="finishIcon"></div>
@@ -580,23 +576,19 @@
   <script>
 
     const state = {
-      questions:    [],   // lista embaralhada de {a, b}
-      currentIndex: 0,    // índice da questão atual
-      currentQ:     null, // questão em exibição {a, b}
-      isInverted:   false,// se a ordem (a × b → b × a) foi invertida
-      typedValue:   '',   // dígitos digitados pelo usuário
-      isChecked:    false,// true após o usuário confirmar a resposta
+      questions:    [],
+      currentIndex: 0,
+      currentQ:     null,
+      isInverted:   false,
+      typedValue:   '',
+      isChecked:    false,
       correctCount: 0,
       wrongCount:   0,
-      streak:       0,    // sequência atual de acertos
+      streak:       0,
       bestStreak:   0,
-      history:      [],   // [{q, correct, typed, ok}]
+      history:      [],
     };
 
-    /* ---------------------------------------------------------
-       Cobre todas as combinações de 2×2 até 10×10 sem repetição
-       por comutatividade (2×3 = 3×2), total 45 questões.
-    --------------------------------------------------------- */
     function generateQuestions() {
       const qs = [];
       for (let a = 2; a <= 10; a++) {
@@ -604,7 +596,6 @@
           qs.push({ a, b });
         }
       }
-      
       for (let i = qs.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [qs[i], qs[j]] = [qs[j], qs[i]];
@@ -612,16 +603,13 @@
       return qs;
     }
 
-
     function renderProgress() {
       const { currentIndex, questions } = state;
       const total = questions.length;
       const pct   = Math.round((currentIndex / total) * 100);
-
       document.getElementById('pbarFill').style.width = pct + '%';
       document.getElementById('progLabel').textContent = `${currentIndex} de ${total}`;
       document.getElementById('progPct').textContent   = pct + '%';
-
       const pbar = document.querySelector('.pbar');
       pbar.setAttribute('aria-valuenow', pct);
     }
@@ -641,14 +629,8 @@
     function renderQuestion() {
       const { currentIndex, questions, currentQ, isInverted } = state;
       const total = questions.length;
-
-      document.getElementById('questionLabel').textContent =
-        `Questão ${currentIndex + 1} de ${total}`;
-
-      const [x, y] = isInverted
-        ? [currentQ.b, currentQ.a]
-        : [currentQ.a, currentQ.b];
-
+      document.getElementById('questionLabel').textContent = `Questão ${currentIndex + 1} de ${total}`;
+      const [x, y] = isInverted ? [currentQ.b, currentQ.a] : [currentQ.a, currentQ.b];
       document.getElementById('questionNumber').textContent = `${x} × ${y}`;
       document.getElementById('questionHint').textContent   = isInverted ? '(invertida)' : '';
     }
@@ -656,7 +638,6 @@
     function renderAnswerDisplay(value, displayState) {
       const el = document.getElementById('answerDisplay');
       el.textContent = value || '?';
-
       el.className = 'answer-display';
       if (displayState === 'ok')  el.classList.add('answer-display--ok');
       if (displayState === 'err') el.classList.add('answer-display--err');
@@ -670,29 +651,21 @@
       el.innerHTML = html;
     }
 
-
     function renderCtaButton(mode) {
-      const btn   = document.getElementById('ctaBtn');
-      const icon  = document.getElementById('ctaIcon');
-      // const label = document.getElementById('ctaLabel');
-
+      const btn  = document.getElementById('ctaBtn');
+      const icon = document.getElementById('ctaIcon');
       if (mode === 'confirm') {
-        btn.className   = 'cta-btn cta-btn--confirm';
-        icon.className  = 'ti ti-check';
-        // label.textContent = 'Confirmar';
+        btn.className  = 'np cta-btn cta-btn--confirm';
+        icon.className = 'ti ti-check';
       } else {
-        btn.className   = 'cta-btn cta-btn--next';
-        icon.className  = 'ti ti-arrow-right';
-        // label.textContent = 'Continuar';
+        btn.className  = 'np cta-btn cta-btn--next';
+        icon.className = 'ti ti-arrow-right';
       }
-
       btn.disabled = false;
     }
 
     function setNumpadDisabled(disabled) {
-      document.querySelectorAll('.np').forEach(btn => {
-        btn.disabled = disabled;
-      });
+      document.querySelectorAll('.np').forEach(btn => { btn.disabled = disabled; });
     }
 
     function showQuestion() {
@@ -700,12 +673,10 @@
         showFinishScreen();
         return;
       }
-
       state.currentQ   = state.questions[state.currentIndex];
       state.isInverted = false;
       state.typedValue = '';
       state.isChecked  = false;
-
       renderProgress();
       renderStats();
       renderStreak();
@@ -731,19 +702,11 @@
 
     function checkAnswer() {
       if (!state.typedValue) return;
-
       state.isChecked = true;
       const userAnswer    = Number(state.typedValue);
       const correctAnswer = state.currentQ.a * state.currentQ.b;
       const isOk          = userAnswer === correctAnswer;
-
-      state.history.push({
-        q:       `${state.currentQ.a} × ${state.currentQ.b}`,
-        correct: correctAnswer,
-        typed:   userAnswer,
-        ok:      isOk,
-      });
-
+      state.history.push({ q: `${state.currentQ.a} × ${state.currentQ.b}`, correct: correctAnswer, typed: userAnswer, ok: isOk });
       if (isOk) {
         state.correctCount++;
         state.streak++;
@@ -752,20 +715,13 @@
         state.wrongCount++;
         state.streak = 0;
       }
-
       if (isOk) {
         renderAnswerDisplay(state.typedValue, 'ok');
-        renderFeedback('ok',
-          `<i class="ti ti-check" aria-hidden="true"></i> Correto! ` +
-          `${state.currentQ.a} × ${state.currentQ.b} = ${correctAnswer}`
-        );
+        renderFeedback('ok', `<i class="ti ti-check" aria-hidden="true"></i> Correto! ${state.currentQ.a} × ${state.currentQ.b} = ${correctAnswer}`);
       } else {
         renderAnswerDisplay(state.typedValue, 'err');
-        renderFeedback('err',
-          `<i class="ti ti-x" aria-hidden="true"></i> Errado! Resposta: ${correctAnswer}`
-        );
+        renderFeedback('err', `<i class="ti ti-x" aria-hidden="true"></i> Errado! Resposta: ${correctAnswer}`);
       }
-
       renderStats();
       renderStreak();
       setNumpadDisabled(true);
@@ -778,11 +734,7 @@
     }
 
     function handleCtaClick() {
-      if (!state.isChecked) {
-        checkAnswer();
-      } else {
-        advanceQuestion();
-      }
+      if (!state.isChecked) { checkAnswer(); } else { advanceQuestion(); }
     }
 
     function invertQuestion() {
@@ -793,128 +745,78 @@
 
     function restartGame() {
       Object.assign(state, {
-        questions:    generateQuestions(),
-        currentIndex: 0,
-        currentQ:     null,
-        isInverted:   false,
-        typedValue:   '',
-        isChecked:    false,
-        correctCount: 0,
-        wrongCount:   0,
-        streak:       0,
-        bestStreak:   0,
-        history:      [],
+        questions: generateQuestions(), currentIndex: 0, currentQ: null,
+        isInverted: false, typedValue: '', isChecked: false,
+        correctCount: 0, wrongCount: 0, streak: 0, bestStreak: 0, history: [],
       });
-
       document.getElementById('gameArea').style.display   = 'flex';
       document.getElementById('finishArea').style.display = 'none';
       closeModal();
       showQuestion();
     }
 
-
     function openModal() {
       const list = document.getElementById('histList');
-
       if (!state.history.length) {
-        list.innerHTML =
-          '<p style="color:var(--c-muted);font-size:13px;text-align:center;padding:14px 0">' +
-          'Nenhuma resposta ainda.</p>';
+        list.innerHTML = '<p style="color:var(--c-muted);font-size:13px;text-align:center;padding:14px 0">Nenhuma resposta ainda.</p>';
       } else {
         list.innerHTML = state.history.map(entry => {
           const cls  = entry.ok ? 'ok' : 'err';
           const icon = entry.ok ? 'ti-check' : 'ti-x';
-          const wrongNote = entry.ok
-            ? ''
-            : `<span class="hist-item__answer">Você: ${entry.typed}</span>`;
-
-          return (
-            `<div class="hist-item hist-item--${cls}">` +
-            `<span><i class="ti ${icon}" aria-hidden="true" style="margin-right:5px"></i>` +
-            `${entry.q} = ${entry.correct}</span>` +
-            wrongNote +
-            `</div>`
-          );
+          const wrongNote = entry.ok ? '' : `<span class="hist-item__answer">Você: ${entry.typed}</span>`;
+          return `<div class="hist-item hist-item--${cls}"><span><i class="ti ${icon}" aria-hidden="true" style="margin-right:5px"></i>${entry.q} = ${entry.correct}</span>${wrongNote}</div>`;
         }).join('');
       }
-
-      document.getElementById('modal').classList.add('modal--open');
-      document.getElementById('modal').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('modalOverlay').classList.add('modal-overlay--open');
     }
 
     function closeModal() {
-      document.getElementById('modal').classList.remove('modal--open');
+      document.getElementById('modalOverlay').classList.remove('modal-overlay--open');
     }
 
     function toggleModal() {
-      const isOpen = document.getElementById('modal').classList.contains('modal--open');
+      const isOpen = document.getElementById('modalOverlay').classList.contains('modal-overlay--open');
       isOpen ? closeModal() : openModal();
     }
-
 
     function showFinishScreen() {
       document.getElementById('gameArea').style.display   = 'none';
       document.getElementById('finishArea').style.display = 'flex';
-
       document.getElementById('pbarFill').style.width     = '100%';
-      document.getElementById('progLabel').textContent    =
-        `${state.questions.length} de ${state.questions.length}`;
+      document.getElementById('progLabel').textContent    = `${state.questions.length} de ${state.questions.length}`;
       document.getElementById('progPct').textContent      = '100%';
-
       const total = state.questions.length;
       const pct   = Math.round((state.correctCount / total) * 100);
-
       const icon  = pct === 100 ? '🏆' : pct >= 80 ? '🎉' : pct >= 60 ? '👍' : '📚';
-      const title =
-        pct === 100 ? 'Perfeito!'             :
-        pct >=  80  ? 'Muito bem!'            :
-        pct >=  60  ? 'Bom trabalho!'         :
-                      'Continue praticando!';
-
+      const title = pct === 100 ? 'Perfeito!' : pct >= 80 ? 'Muito bem!' : pct >= 60 ? 'Bom trabalho!' : 'Continue praticando!';
       document.getElementById('finishIcon').textContent  = icon;
       document.getElementById('finishTitle').textContent = title;
-      document.getElementById('finishSub').textContent   =
-        `${state.correctCount} acertos · ${state.wrongCount} erros · ${pct}% de aproveitamento`;
-
-      
+      document.getElementById('finishSub').textContent   = `${state.correctCount} acertos · ${state.wrongCount} erros · ${pct}% de aproveitamento`;
       document.getElementById('finishStats').innerHTML =
-        `<div class="stat">
-          <div class="stat__value stat__value--correct">${state.correctCount}</div>
-          <div class="stat__label">Acertos</div>
-        </div>` +
-        `<div class="stat">
-          <div class="stat__value stat__value--wrong">${state.wrongCount}</div>
-          <div class="stat__label">Erros</div>
-        </div>` +
-        `<div class="stat">
-          <div class="stat__value stat__value--question">${state.bestStreak}</div>
-          <div class="stat__label">Melhor seq.</div>
-        </div>`;
+        `<div class="stat"><div class="stat__value stat__value--correct">${state.correctCount}</div><div class="stat__label">Acertos</div></div>` +
+        `<div class="stat"><div class="stat__value stat__value--wrong">${state.wrongCount}</div><div class="stat__label">Erros</div></div>` +
+        `<div class="stat"><div class="stat__value stat__value--question">${state.bestStreak}</div><div class="stat__label">Melhor seq.</div></div>`;
     }
 
     document.getElementById('btnHistory').addEventListener('click', toggleModal);
     document.getElementById('btnRestart').addEventListener('click', restartGame);
-
     document.getElementById('btnModalClose').addEventListener('click', closeModal);
-
+    document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
     document.querySelector('.numpad').addEventListener('click', e => {
       const btn = e.target.closest('[data-digit]');
       if (btn) appendDigit(btn.dataset.digit);
     });
     document.getElementById('btnDelete').addEventListener('click', deleteLastDigit);
-
     document.getElementById('ctaBtn').addEventListener('click', handleCtaClick);
-
     document.getElementById('btnInvert').addEventListener('click', invertQuestion);
     document.getElementById('btnRestartGame').addEventListener('click', restartGame);
-
     document.getElementById('btnPlayAgain').addEventListener('click', restartGame);
     document.getElementById('btnFinishHistory').addEventListener('click', toggleModal);
-
     document.addEventListener('keydown', e => {
       if (e.key >= '0' && e.key <= '9') appendDigit(e.key);
-      else if (e.key === 'Backspace')    deleteLastDigit();
-      else if (e.key === 'Enter')        handleCtaClick();
+      else if (e.key === 'Backspace') deleteLastDigit();
+      else if (e.key === 'Enter') handleCtaClick();
+      else if (e.key === 'Escape') closeModal();
     });
 
     state.questions = generateQuestions();
